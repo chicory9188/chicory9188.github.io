@@ -81,17 +81,42 @@
             error.style.display = 'none';
 
             try {
-                const response = await fetch(`http://150.109.94.215:5000/analyze/${address}?days=1`);
+                // 使用CORS代理或者直接尝试访问
+                let response;
+                try {
+                    // 首先尝试直接访问
+                    response = await fetch(`http://150.109.94.215:5000/analyze/${address}?days=1`, {
+                        mode: 'cors',
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                } catch (corsError) {
+                    // 如果CORS失败，尝试使用公共代理
+                    response = await fetch(`https://cors-anywhere.herokuapp.com/http://150.109.94.215:5000/analyze/${address}?days=1`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 if (!data.success) {
-                    throw new Error('分析失败');
+                    throw new Error('API返回失败状态');
                 }
 
                 displayResults(data.data);
                 results.style.display = 'block';
             } catch (err) {
-                showError('分析失败，请检查地址是否正确');
+                console.error('错误详情:', err);
+                showError(`分析失败: ${err.message}. 可能是跨域问题，请尝试在本地服务器运行或联系管理员配置CORS`);
             } finally {
                 loading.style.display = 'none';
             }

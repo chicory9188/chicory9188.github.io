@@ -3,391 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVM地址脚本执行器</title>
+    <title>钱包交易分析器</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            width: 100%;
-            max-width: 800px;
-            animation: slideUp 0.5s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            font-weight: 300;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .input-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-            font-size: 1.1em;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.8);
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        button {
-            flex: 1;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .run-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-
-        .run-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .run-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .clear-btn {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-        }
-
-        .clear-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
-        }
-
-        .log-container {
-            background: #1e1e1e;
-            border-radius: 10px;
-            padding: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            position: relative;
-        }
-
-        .log-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .log-title {
-            color: #fff;
-            font-size: 1.2em;
-            font-weight: 600;
-        }
-
-        .log-output {
-            color: #00ff41;
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-            border: 1px solid rgba(255, 107, 107, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px 0;
-            font-weight: 500;
-        }
-
-        .success-message {
-            color: #00ff41;
-            background: rgba(0, 255, 65, 0.1);
-            border: 1px solid rgba(0, 255, 65, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px 0;
-            font-weight: 500;
-        }
-
-        .log-output::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .log-output::-webkit-scrollbar-track {
-            background: #2d2d2d;
-            border-radius: 4px;
-        }
-
-        .log-output::-webkit-scrollbar-thumb {
-            background: #555;
-            border-radius: 4px;
-        }
-
-        .log-output::-webkit-scrollbar-thumb:hover {
-            background: #777;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-            
-            h1 {
-                font-size: 2em;
-            }
-            
-            .button-group {
-                flex-direction: column;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .input-group { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .input-group input { width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px; }
+        .input-group button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        .input-group button:hover { background: #0056b3; }
+        .loading { text-align: center; color: #666; display: none; }
+        .results { display: none; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .pnl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .pnl-item { text-align: center; padding: 15px; border-radius: 8px; }
+        .pnl-positive { background: #d4edda; color: #155724; }
+        .pnl-negative { background: #f8d7da; color: #721c24; }
+        .pnl-neutral { background: #e2e3e5; color: #383d41; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .summary-item { text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .tx-list { max-height: 400px; overflow-y: auto; }
+        .tx-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .tx-buy { border-left: 4px solid #28a745; }
+        .tx-sell { border-left: 4px solid #dc3545; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 EVM地址脚本执行器</h1>
-        
+        <div class="header">
+            <h1>钱包交易分析器</h1>
+            <p>输入钱包地址分析交易数据</p>
+        </div>
+
         <div class="input-group">
-            <label for="evmAddress">EVM地址:</label>
-            <input type="text" id="evmAddress" placeholder="请输入EVM地址 (例如: 0x742d35Cc6634C0532925a3b8D2d3c0b0fcb2d0c8)" />
+            <input type="text" id="walletAddress" placeholder="输入钱包地址 (0x...)" />
+            <button onclick="analyze()">分析</button>
         </div>
-        
-        <div class="button-group">
-            <button class="run-btn" onclick="runScript()">执行脚本</button>
-            <button class="clear-btn" onclick="clearLog()">清空日志</button>
-        </div>
-        
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>正在执行脚本...</p>
-        </div>
-        
-        <div class="log-container">
-            <div class="log-header">
-                <div class="log-title">📋 执行日志</div>
+
+        <div class="loading" id="loading">正在分析中...</div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <h3>盈亏分析</h3>
+                <div class="pnl" id="pnlData"></div>
             </div>
-            <div class="log-output" id="logOutput">等待执行脚本...\n</div>
+
+            <div class="card">
+                <h3>交易概览</h3>
+                <div class="summary" id="summaryData"></div>
+            </div>
+
+            <div class="card">
+                <h3>交易记录</h3>
+                <div class="tx-list" id="txList"></div>
+            </div>
         </div>
+
+        <div class="error" id="error" style="display: none;"></div>
     </div>
 
     <script>
-        let logOutput = document.getElementById('logOutput');
-        let loadingDiv = document.getElementById('loading');
-        let runButton = document.querySelector('.run-btn');
-
-        // 验证EVM地址格式
-        function isValidEVMAddress(address) {
-            return /^0x[a-fA-F0-9]{40}$/.test(address);
-        }
-
-        // 添加日志
-        function addLog(message, type = 'info') {
-            const timestamp = new Date().toLocaleString();
-            let colorClass = '';
-            let prefix = '';
-            
-            switch(type) {
-                case 'error':
-                    colorClass = 'color: #ff6b6b;';
-                    prefix = '❌ ';
-                    break;
-                case 'success':
-                    colorClass = 'color: #00ff41;';
-                    prefix = '✅ ';
-                    break;
-                case 'warning':
-                    colorClass = 'color: #ffa500;';
-                    prefix = '⚠️  ';
-                    break;
-                default:
-                    colorClass = 'color: #00ff41;';
-                    prefix = '📝 ';
-            }
-            
-            logOutput.innerHTML += `<span style="${colorClass}">[${timestamp}] ${prefix}${message}</span>\n`;
-            logOutput.scrollTop = logOutput.scrollHeight;
-        }
-
-        // 清空日志
-        function clearLog() {
-            logOutput.innerHTML = '等待执行脚本...\n';
-        }
-
-        // 模拟脚本执行 (实际使用时需要连接到后端API)
-        async function runScript() {
-            const evmAddress = document.getElementById('evmAddress').value.trim();
-            
-            // 验证输入
-            if (!evmAddress) {
-                addLog('请输入EVM地址', 'error');
-                return;
-            }
-            
-            if (!isValidEVMAddress(evmAddress)) {
-                addLog('EVM地址格式不正确，请输入有效的地址 (0x开头，40位十六进制字符)', 'error');
+        async function analyze() {
+            const address = document.getElementById('walletAddress').value.trim();
+            if (!address) {
+                showError('请输入钱包地址');
                 return;
             }
 
-            // 显示加载状态
-            loadingDiv.style.display = 'block';
-            runButton.disabled = true;
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('error');
             
-            addLog(`开始执行脚本，目标地址: ${evmAddress}`, 'info');
-            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            error.style.display = 'none';
+
             try {
-                // 这里是模拟的脚本执行过程
-                // 实际使用时，你需要调用后端API
-                
-                addLog('正在连接到区块链...', 'info');
-                await sleep(1000);
-                
-                addLog('正在获取地址信息...', 'info');
-                await sleep(1500);
-                
-                addLog('正在分析交易历史...', 'info');
-                await sleep(2000);
-                
-                // 模拟一些脚本输出
-                addLog(`地址余额: 1.2345 ETH`, 'success');
-                addLog(`交易次数: 156`, 'success');
-                addLog(`最后交易时间: ${new Date().toLocaleString()}`, 'success');
-                
-                addLog('脚本执行完成！', 'success');
-                
-                /* 
-                实际使用时，替换上面的模拟代码为真实的API调用:
-                
-                const response = await fetch('/api/run-script', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ evmAddress: evmAddress })
-                });
-                
+                const response = await fetch(`http://150.109.94.215:5000/analyze/${address}?days=1`);
                 const data = await response.json();
                 
-                if (response.ok) {
-                    addLog(data.output, 'success');
-                } else {
-                    addLog(data.error, 'error');
+                if (!data.success) {
+                    throw new Error('分析失败');
                 }
-                */
-                
-            } catch (error) {
-                addLog(`执行出错: ${error.message}`, 'error');
+
+                displayResults(data.data);
+                results.style.display = 'block';
+            } catch (err) {
+                showError('分析失败，请检查地址是否正确');
             } finally {
-                // 隐藏加载状态
-                loadingDiv.style.display = 'none';
-                runButton.disabled = false;
+                loading.style.display = 'none';
             }
         }
 
-        // 辅助函数：延迟
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
+        function displayResults(data) {
+            displayPnL(data.pnl_analysis);
+            displaySummary(data.swap_summary);
+            displayTransactions(data.swap_summary.transactions);
         }
 
-        // 回车键执行
-        document.getElementById('evmAddress').addEventListener('keypress', function(e) {
+        function displayPnL(pnl) {
+            const container = document.getElementById('pnlData');
+            const totalPnL = pnl.total_pnl_usd;
+            const pnlClass = totalPnL > 0 ? 'pnl-positive' : totalPnL < 0 ? 'pnl-negative' : 'pnl-neutral';
+            
+            container.innerHTML = `
+                <div class="pnl-item ${pnlClass}">
+                    <div>总盈亏</div>
+                    <div><strong>$${totalPnL.toFixed(2)}</strong></div>
+                </div>
+                <div class="pnl-item pnl-neutral">
+                    <div>净USDT</div>
+                    <div><strong>$${pnl.net_usdt.toFixed(2)}</strong></div>
+                </div>
+                <div class="pnl-item pnl-neutral">
+                    <div>Gas费用</div>
+                    <div><strong>$${pnl.gas_fee_usd.toFixed(4)}</strong></div>
+                </div>
+                <div class="pnl-item pnl-neutral">
+                    <div>平均价格</div>
+                    <div><strong>$${pnl.avg_koge_price.toFixed(2)}</strong></div>
+                </div>
+            `;
+        }
+
+        function displaySummary(summary) {
+            const container = document.getElementById('summaryData');
+            container.innerHTML = `
+                <div class="summary-item">
+                    <div>总交易</div>
+                    <div><strong>${summary.swap_count}</strong></div>
+                </div>
+                <div class="summary-item">
+                    <div>买入次数</div>
+                    <div><strong>${summary.buy_count}</strong></div>
+                </div>
+                <div class="summary-item">
+                    <div>卖出次数</div>
+                    <div><strong>${summary.sell_count}</strong></div>
+                </div>
+                <div class="summary-item">
+                    <div>USDT交易量</div>
+                    <div><strong>$${summary.total_usdt_spent.toLocaleString()}</strong></div>
+                </div>
+            `;
+        }
+
+        function displayTransactions(transactions) {
+            const container = document.getElementById('txList');
+            container.innerHTML = transactions.map(tx => `
+                <div class="tx-item ${tx.type === 'BUY' ? 'tx-buy' : 'tx-sell'}">
+                    <div>
+                        <strong>${tx.type}</strong>
+                        <div style="font-size: 12px; color: #666;">${tx.timestamp}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div>${tx.type === 'BUY' ? tx.koge_out.toFixed(2) : tx.koge_in.toFixed(2)} KOGE</div>
+                        <div style="font-size: 12px; color: #666;">$${(tx.usdt_in || tx.usdt_out).toLocaleString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        // 回车键触发分析
+        document.getElementById('walletAddress').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                runScript();
+                analyze();
             }
-        });
-
-        // 页面加载完成后的初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            addLog('系统已就绪，请输入EVM地址开始执行脚本', 'success');
         });
     </script>
 </body>

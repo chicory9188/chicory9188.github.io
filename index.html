@@ -284,7 +284,7 @@
         <div class="input-section">
             <div class="input-group">
                 <label for="addressInput">钱包地址:</label>
-                <input type="text" id="addressInput" placeholder="输入钱包地址 (例如: 0xb7bd823Fad5Ef0ef6D7878c82b1bacca207FCedC)" value="0xb7bd823Fad5Ef0ef6D7878c82b1bacca207FCedC">
+                <input type="text" id="addressInput" placeholder="输入钱包地址 (例如: 0xb7bd823Fad5Ef0ef6D7878c82b1bacca207FCedC)">
                 <button class="btn" onclick="analyzeAddress()" id="analyzeBtn">分析</button>
             </div>
         </div>
@@ -347,66 +347,7 @@
     </div>
 
     <script>
-        // 示例数据（从您提供的JSON中提取）
-        const sampleData = {
-            "data": {
-                "address": "0xb7bd823Fad5Ef0ef6D7878c82b1bacca207FCedC",
-                "current_prices": {
-                    "bnb_usd": 643.57
-                },
-                "koge_contract": "0xe6df05ce8c8301223373cf5b969afcb1498c5528",
-                "pnl_analysis": {
-                    "avg_koge_price": 63.46829455989567,
-                    "gas_fee_usd": 0.36351081590010004,
-                    "koge_value_usd": 0.0,
-                    "net_koge": 0.0,
-                    "net_usdt": -3.517792614768104,
-                    "total_gas_fee_bnb": 0.00056483493,
-                    "total_pnl_usd": -3.881303430668204
-                },
-                "swap_summary": {
-                    "buy_count": 10,
-                    "sell_count": 10,
-                    "swap_count": 20,
-                    "total_gas_fee": 0.00056483493,
-                    "total_koge_received": 279.03495170605345,
-                    "total_koge_spent": 279.03495170605345,
-                    "total_usdt_for_buying": 17711.63140369345,
-                    "total_usdt_received": 17708.11361107868,
-                    "total_usdt_spent": 17711.63140369345,
-                    "transactions": [
-                        {
-                            "gas_fee": 2.765972e-05,
-                            "koge_in": 0.0,
-                            "koge_out": 27.928361275048058,
-                            "rate": 63.47473123457831,
-                            "timestamp": "2025-06-06 13:46:42",
-                            "tx_hash": "0x764f421209bc5d3dd7d7d37b96e88d7d30e73889d2decc67f2993824d9387d1f",
-                            "type": "BUY",
-                            "usdt_in": 1772.7452257558803,
-                            "usdt_out": 0.0
-                        },
-                        {
-                            "gas_fee": 2.759075e-05,
-                            "koge_in": 27.928361275048058,
-                            "koge_out": 0.0,
-                            "rate": 63.46214307603617,
-                            "timestamp": "2025-06-06 13:46:51",
-                            "tx_hash": "0x272ba4bb969647539645ebf0039c89343573687a8ac61fde7bbbdcb20aa557c6",
-                            "type": "SELL",
-                            "usdt_in": 0.0,
-                            "usdt_out": 1772.393659116328
-                        }
-                    ]
-                },
-                "time_range": {
-                    "days": 1,
-                    "end": "2025-06-06T10:24:16.722166+00:00",
-                    "start": "2025-06-06T00:00:00+00:00"
-                }
-            },
-            "success": true
-        };
+
 
         function formatNumber(num) {
             if (num === 0) return '0';
@@ -557,14 +498,14 @@
             analyzeBtn.disabled = true;
 
             try {
-                // 这里您可以替换为实际的API调用
-                // const response = await fetch(`http://150.109.94.215:5000/analyze/${address}?days=1`);
+                // 实际的API调用
+                const response = await fetch(`http://150.109.94.215:5000/analyze/${address}?days=1`);
                 
-                // 模拟API调用延迟
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
-                // 使用示例数据（在实际应用中，您应该使用真实的API响应）
-                const data = sampleData;
+                const data = await response.json();
                 
                 if (data.success) {
                     displayAnalysis(data.data);
@@ -582,12 +523,9 @@
             }
         }
 
-        // 页面加载时自动分析示例地址
+        // 页面加载完成
         window.addEventListener('load', function() {
-            // 延迟1秒后自动分析示例数据
-            setTimeout(() => {
-                displayAnalysis(sampleData.data);
-            }, 500);
+            console.log('加密货币交易分析器已加载，请输入钱包地址进行分析');
         });
 
         // 支持回车键提交

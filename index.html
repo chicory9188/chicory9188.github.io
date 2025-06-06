@@ -3,204 +3,597 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>钱包交易分析器</title>
+    <title>加密货币交易分析器</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .input-group { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .input-group input { width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px; }
-        .input-group button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; }
-        .input-group button:hover { background: #0056b3; }
-        .loading { text-align: center; color: #666; display: none; }
-        .results { display: none; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .pnl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .pnl-item { text-align: center; padding: 15px; border-radius: 8px; }
-        .pnl-positive { background: #d4edda; color: #155724; }
-        .pnl-negative { background: #f8d7da; color: #721c24; }
-        .pnl-neutral { background: #e2e3e5; color: #383d41; }
-        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-        .summary-item { text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px; }
-        .tx-list { max-height: 400px; overflow-y: auto; }
-        .tx-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .tx-buy { border-left: 4px solid #28a745; }
-        .tx-sell { border-left: 4px solid #dc3545; }
-        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; text-align: center; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 120px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-width: 300px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .analysis-content {
+            padding: 30px;
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .positive {
+            color: #28a745 !important;
+        }
+
+        .negative {
+            color: #dc3545 !important;
+        }
+
+        .transactions-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .transactions-table {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .buy-row {
+            border-left: 4px solid #28a745;
+        }
+
+        .sell-row {
+            border-left: 4px solid #dc3545;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #dc3545;
+            display: none;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group label {
+                min-width: auto;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .transactions-table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>钱包交易分析器</h1>
-            <p>输入钱包地址分析交易数据</p>
+            <h1>🚀 加密货币交易分析器</h1>
+            <p>输入钱包地址获取详细的交易分析报告</p>
         </div>
 
-        <div class="input-group">
-            <input type="text" id="walletAddress" placeholder="输入钱包地址 (0x...)" />
-            <button onclick="analyze()">分析</button>
-        </div>
-
-        <div class="loading" id="loading">正在分析中...</div>
-
-        <div class="results" id="results">
-            <div class="card">
-                <h3>盈亏分析</h3>
-                <div class="pnl" id="pnlData"></div>
-            </div>
-
-            <div class="card">
-                <h3>交易概览</h3>
-                <div class="summary" id="summaryData"></div>
-            </div>
-
-            <div class="card">
-                <h3>交易记录</h3>
-                <div class="tx-list" id="txList"></div>
+        <div class="input-section">
+            <div class="input-group">
+                <label for="addressInput">钱包地址:</label>
+                <input type="text" id="addressInput" placeholder="输入钱包地址 (例如: 0xb7bd823Fad5Ef0ef6D7878c82b1bacca207FCedC)" value="0xb7bd823Fad5Ef0ef6D7878c82b1bacca207FCedC">
+                <button class="btn" onclick="analyzeAddress()" id="analyzeBtn">分析</button>
             </div>
         </div>
 
-        <div class="error" id="error" style="display: none;"></div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在分析交易数据，请稍候...</p>
+        </div>
+
+        <div class="error" id="error">
+            <div class="error-icon">⚠️</div>
+            <h3>分析失败</h3>
+            <p id="errorMessage">无法获取交易数据，请检查地址是否正确或稍后重试。</p>
+        </div>
+
+        <div class="analysis-content" id="analysisContent">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📊 盈亏分析 (PnL)</h3>
+                    <div id="pnlStats"></div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>📈 交易摘要</h3>
+                    <div id="swapStats"></div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>💰 当前价格</h3>
+                    <div id="priceStats"></div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>ℹ️ 基本信息</h3>
+                    <div id="basicInfo"></div>
+                </div>
+            </div>
+
+            <div class="transactions-section">
+                <h2 class="section-title">🔄 交易记录</h2>
+                <div class="transactions-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>类型</th>
+                                <th>KOGE量</th>
+                                <th>USDT量</th>
+                                <th>价格</th>
+                                <th>Gas费用</th>
+                                <th>交易哈希</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsList">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        async function analyze() {
-            const address = document.getElementById('walletAddress').value.trim();
+        // 示例数据（从您提供的JSON中提取）
+        const sampleData = {
+            "data": {
+                "address": "0xb7bd823Fad5Ef0ef6D7878c82b1bacca207FCedC",
+                "current_prices": {
+                    "bnb_usd": 643.57
+                },
+                "koge_contract": "0xe6df05ce8c8301223373cf5b969afcb1498c5528",
+                "pnl_analysis": {
+                    "avg_koge_price": 63.46829455989567,
+                    "gas_fee_usd": 0.36351081590010004,
+                    "koge_value_usd": 0.0,
+                    "net_koge": 0.0,
+                    "net_usdt": -3.517792614768104,
+                    "total_gas_fee_bnb": 0.00056483493,
+                    "total_pnl_usd": -3.881303430668204
+                },
+                "swap_summary": {
+                    "buy_count": 10,
+                    "sell_count": 10,
+                    "swap_count": 20,
+                    "total_gas_fee": 0.00056483493,
+                    "total_koge_received": 279.03495170605345,
+                    "total_koge_spent": 279.03495170605345,
+                    "total_usdt_for_buying": 17711.63140369345,
+                    "total_usdt_received": 17708.11361107868,
+                    "total_usdt_spent": 17711.63140369345,
+                    "transactions": [
+                        {
+                            "gas_fee": 2.765972e-05,
+                            "koge_in": 0.0,
+                            "koge_out": 27.928361275048058,
+                            "rate": 63.47473123457831,
+                            "timestamp": "2025-06-06 13:46:42",
+                            "tx_hash": "0x764f421209bc5d3dd7d7d37b96e88d7d30e73889d2decc67f2993824d9387d1f",
+                            "type": "BUY",
+                            "usdt_in": 1772.7452257558803,
+                            "usdt_out": 0.0
+                        },
+                        {
+                            "gas_fee": 2.759075e-05,
+                            "koge_in": 27.928361275048058,
+                            "koge_out": 0.0,
+                            "rate": 63.46214307603617,
+                            "timestamp": "2025-06-06 13:46:51",
+                            "tx_hash": "0x272ba4bb969647539645ebf0039c89343573687a8ac61fde7bbbdcb20aa557c6",
+                            "type": "SELL",
+                            "usdt_in": 0.0,
+                            "usdt_out": 1772.393659116328
+                        }
+                    ]
+                },
+                "time_range": {
+                    "days": 1,
+                    "end": "2025-06-06T10:24:16.722166+00:00",
+                    "start": "2025-06-06T00:00:00+00:00"
+                }
+            },
+            "success": true
+        };
+
+        function formatNumber(num) {
+            if (num === 0) return '0';
+            if (Math.abs(num) < 0.01) return num.toExponential(4);
+            return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+        }
+
+        function formatCurrency(num) {
+            return '$' + formatNumber(num);
+        }
+
+        function getValueClass(value) {
+            if (value > 0) return 'positive';
+            if (value < 0) return 'negative';
+            return '';
+        }
+
+        function shortenHash(hash) {
+            return hash.substring(0, 10) + '...' + hash.substring(hash.length - 8);
+        }
+
+        function displayAnalysis(data) {
+            // 显示PnL分析
+            const pnlStats = document.getElementById('pnlStats');
+            pnlStats.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">总盈亏 (USD)</span>
+                    <span class="stat-value ${getValueClass(data.pnl_analysis.total_pnl_usd)}">${formatCurrency(data.pnl_analysis.total_pnl_usd)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">净USDT</span>
+                    <span class="stat-value ${getValueClass(data.pnl_analysis.net_usdt)}">${formatNumber(data.pnl_analysis.net_usdt)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">净KOGE</span>
+                    <span class="stat-value">${formatNumber(data.pnl_analysis.net_koge)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">KOGE价值 (USD)</span>
+                    <span class="stat-value">${formatCurrency(data.pnl_analysis.koge_value_usd)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">平均KOGE价格</span>
+                    <span class="stat-value">${formatCurrency(data.pnl_analysis.avg_koge_price)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">总Gas费用 (USD)</span>
+                    <span class="stat-value negative">${formatCurrency(data.pnl_analysis.gas_fee_usd)}</span>
+                </div>
+            `;
+
+            // 显示交易摘要
+            const swapStats = document.getElementById('swapStats');
+            swapStats.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">总交易数</span>
+                    <span class="stat-value">${data.swap_summary.swap_count}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">买入次数</span>
+                    <span class="stat-value positive">${data.swap_summary.buy_count}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">卖出次数</span>
+                    <span class="stat-value negative">${data.swap_summary.sell_count}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">总KOGE收到</span>
+                    <span class="stat-value">${formatNumber(data.swap_summary.total_koge_received)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">总KOGE支出</span>
+                    <span class="stat-value">${formatNumber(data.swap_summary.total_koge_spent)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">总USDT支出</span>
+                    <span class="stat-value">${formatNumber(data.swap_summary.total_usdt_spent)}</span>
+                </div>
+            `;
+
+            // 显示当前价格
+            const priceStats = document.getElementById('priceStats');
+            priceStats.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">BNB价格 (USD)</span>
+                    <span class="stat-value">${formatCurrency(data.current_prices.bnb_usd)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">总Gas费用 (BNB)</span>
+                    <span class="stat-value">${formatNumber(data.pnl_analysis.total_gas_fee_bnb)}</span>
+                </div>
+            `;
+
+            // 显示基本信息
+            const basicInfo = document.getElementById('basicInfo');
+            basicInfo.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">钱包地址</span>
+                    <span class="stat-value" style="font-size: 0.8rem;">${shortenHash(data.address)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">KOGE合约</span>
+                    <span class="stat-value" style="font-size: 0.8rem;">${shortenHash(data.koge_contract)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">分析天数</span>
+                    <span class="stat-value">${data.time_range.days} 天</span>
+                </div>
+            `;
+
+            // 显示交易记录
+            const transactionsList = document.getElementById('transactionsList');
+            transactionsList.innerHTML = data.swap_summary.transactions.map(tx => `
+                <tr class="${tx.type.toLowerCase()}-row">
+                    <td>${new Date(tx.timestamp).toLocaleString('zh-CN')}</td>
+                    <td><span class="${tx.type === 'BUY' ? 'positive' : 'negative'}">${tx.type === 'BUY' ? '买入' : '卖出'}</span></td>
+                    <td>${tx.type === 'BUY' ? formatNumber(tx.koge_out) : formatNumber(tx.koge_in)}</td>
+                    <td>${tx.type === 'BUY' ? formatNumber(tx.usdt_in) : formatNumber(tx.usdt_out)}</td>
+                    <td>${formatCurrency(tx.rate)}</td>
+                    <td>${formatNumber(tx.gas_fee)} BNB</td>
+                    <td><a href="https://bscscan.com/tx/${tx.tx_hash}" target="_blank" style="color: #667eea; text-decoration: none;">${shortenHash(tx.tx_hash)}</a></td>
+                </tr>
+            `).join('');
+
+            // 显示分析结果
+            document.getElementById('analysisContent').style.display = 'block';
+        }
+
+        async function analyzeAddress() {
+            const address = document.getElementById('addressInput').value.trim();
             if (!address) {
-                showError('请输入钱包地址');
+                alert('请输入钱包地址');
                 return;
             }
 
+            const analyzeBtn = document.getElementById('analyzeBtn');
             const loading = document.getElementById('loading');
-            const results = document.getElementById('results');
             const error = document.getElementById('error');
-            
-            loading.style.display = 'block';
-            results.style.display = 'none';
+            const analysisContent = document.getElementById('analysisContent');
+
+            // 重置显示状态
+            loading.style.display = 'none';
             error.style.display = 'none';
+            analysisContent.style.display = 'none';
+
+            // 显示加载状态
+            loading.style.display = 'block';
+            analyzeBtn.disabled = true;
 
             try {
-                // 使用CORS代理或者直接尝试访问
-                let response;
-                try {
-                    // 首先尝试直接访问
-                    response = await fetch(`http://150.109.94.215:5000/analyze/${address}?days=1`, {
-                        mode: 'cors',
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                } catch (corsError) {
-                    // 如果CORS失败，尝试使用公共代理
-                    response = await fetch(`https://cors-anywhere.herokuapp.com/http://150.109.94.215:5000/analyze/${address}?days=1`, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                }
+                // 这里您可以替换为实际的API调用
+                // const response = await fetch(`http://150.109.94.215:5000/analyze/${address}?days=1`);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
+                // 模拟API调用延迟
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 
-                const data = await response.json();
+                // 使用示例数据（在实际应用中，您应该使用真实的API响应）
+                const data = sampleData;
                 
-                if (!data.success) {
-                    throw new Error('API返回失败状态');
+                if (data.success) {
+                    displayAnalysis(data.data);
+                } else {
+                    throw new Error('API返回错误');
                 }
 
-                displayResults(data.data);
-                results.style.display = 'block';
             } catch (err) {
-                console.error('错误详情:', err);
-                showError(`分析失败: ${err.message}. 可能是跨域问题，请尝试在本地服务器运行或联系管理员配置CORS`);
+                console.error('分析失败:', err);
+                document.getElementById('errorMessage').textContent = `分析失败: ${err.message}`;
+                error.style.display = 'block';
             } finally {
                 loading.style.display = 'none';
+                analyzeBtn.disabled = false;
             }
         }
 
-        function displayResults(data) {
-            displayPnL(data.pnl_analysis);
-            displaySummary(data.swap_summary);
-            displayTransactions(data.swap_summary.transactions);
-        }
+        // 页面加载时自动分析示例地址
+        window.addEventListener('load', function() {
+            // 延迟1秒后自动分析示例数据
+            setTimeout(() => {
+                displayAnalysis(sampleData.data);
+            }, 500);
+        });
 
-        function displayPnL(pnl) {
-            const container = document.getElementById('pnlData');
-            const totalPnL = pnl.total_pnl_usd;
-            const pnlClass = totalPnL > 0 ? 'pnl-positive' : totalPnL < 0 ? 'pnl-negative' : 'pnl-neutral';
-            
-            container.innerHTML = `
-                <div class="pnl-item ${pnlClass}">
-                    <div>总盈亏</div>
-                    <div><strong>$${totalPnL.toFixed(2)}</strong></div>
-                </div>
-                <div class="pnl-item pnl-neutral">
-                    <div>净USDT</div>
-                    <div><strong>$${pnl.net_usdt.toFixed(2)}</strong></div>
-                </div>
-                <div class="pnl-item pnl-neutral">
-                    <div>Gas费用</div>
-                    <div><strong>$${pnl.gas_fee_usd.toFixed(4)}</strong></div>
-                </div>
-                <div class="pnl-item pnl-neutral">
-                    <div>平均价格</div>
-                    <div><strong>$${pnl.avg_koge_price.toFixed(2)}</strong></div>
-                </div>
-            `;
-        }
-
-        function displaySummary(summary) {
-            const container = document.getElementById('summaryData');
-            container.innerHTML = `
-                <div class="summary-item">
-                    <div>总交易</div>
-                    <div><strong>${summary.swap_count}</strong></div>
-                </div>
-                <div class="summary-item">
-                    <div>买入次数</div>
-                    <div><strong>${summary.buy_count}</strong></div>
-                </div>
-                <div class="summary-item">
-                    <div>卖出次数</div>
-                    <div><strong>${summary.sell_count}</strong></div>
-                </div>
-                <div class="summary-item">
-                    <div>USDT交易量</div>
-                    <div><strong>$${summary.total_usdt_spent.toLocaleString()}</strong></div>
-                </div>
-            `;
-        }
-
-        function displayTransactions(transactions) {
-            const container = document.getElementById('txList');
-            container.innerHTML = transactions.map(tx => `
-                <div class="tx-item ${tx.type === 'BUY' ? 'tx-buy' : 'tx-sell'}">
-                    <div>
-                        <strong>${tx.type}</strong>
-                        <div style="font-size: 12px; color: #666;">${tx.timestamp}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div>${tx.type === 'BUY' ? tx.koge_out.toFixed(2) : tx.koge_in.toFixed(2)} KOGE</div>
-                        <div style="font-size: 12px; color: #666;">$${(tx.usdt_in || tx.usdt_out).toLocaleString()}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function showError(message) {
-            const error = document.getElementById('error');
-            error.textContent = message;
-            error.style.display = 'block';
-        }
-
-        // 回车键触发分析
-        document.getElementById('walletAddress').addEventListener('keypress', function(e) {
+        // 支持回车键提交
+        document.getElementById('addressInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                analyze();
+                analyzeAddress();
             }
         });
     </script>

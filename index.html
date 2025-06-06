@@ -499,7 +499,7 @@
 
             try {
                 // 实际的API调用
-                const response = await fetch(`https://150.109.94.215:443/analyze/${address}?days=1`);
+                const response = await fetch(`http://150.109.94.215:5555/analyze/${address}?days=1`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
